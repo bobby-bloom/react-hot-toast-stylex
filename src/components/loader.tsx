@@ -1,26 +1,33 @@
-import { styled, keyframes } from 'goober';
+import stylex from '@stylexjs/stylex';
 
-const rotate = keyframes`
-  from {
-    transform: rotate(0deg);
+const rotate = stylex.keyframes({
+  'from': {
+    transform: 'rotate(0deg)',
+  },
+  'to': {
+    transform: 'rotate(360deg)',
   }
-  to {
-    transform: rotate(360deg);
-  }
-`;
+});
 
-export interface LoaderTheme {
-  primary?: string;
-  secondary?: string;
-}
-
-export const LoaderIcon = styled('div')<LoaderTheme>`
-  width: 12px;
-  height: 12px;
-  box-sizing: border-box;
-  border: 2px solid;
-  border-radius: 100%;
-  border-color: ${(p) => p.secondary || '#e0e0e0'};
-  border-right-color: ${(p) => p.primary || '#616161'};
-  animation: ${rotate} 1s linear infinite;
-`;
+export const loaderIconStyle = stylex.create({
+  style: {
+    width: '12px',
+    height: '12px',
+    boxSizing: 'border-box',
+    borderWidth: '2px',
+    borderRadius: '100%',
+    borderStyle: 'solid',
+    borderColor: '#e0e0e0',
+    borderRightColor: '#616161',
+    animationName: rotate,
+    animationDuration: '1s',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+  },
+  borderColor: (color: string) => ({
+    borderColor: color,
+  }),
+  borderRightColor: (color: string) => ({
+    borderRightColor: color,
+  }),
+});

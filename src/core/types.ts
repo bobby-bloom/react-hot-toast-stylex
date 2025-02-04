@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { StyleXStyles } from '@stylexjs/stylex';
 
 export type ToastType = 'success' | 'error' | 'loading' | 'blank' | 'custom';
 export type ToastPosition =
@@ -46,7 +46,7 @@ export interface Toast {
     'aria-live': 'assertive' | 'off' | 'polite';
   };
 
-  style?: CSSProperties;
+  style?: StyleXStyles;
   className?: string;
   iconTheme?: IconTheme;
 
@@ -80,15 +80,17 @@ export interface ToasterProps {
   toastOptions?: DefaultToastOptions;
   reverseOrder?: boolean;
   gutter?: number;
-  containerStyle?: React.CSSProperties;
+  containerStyles?: StyleXStyles;
   containerClassName?: string;
+  toastWrapperStyles?: StyleXStyles;
+  toastWrapperClassName?: string;
   children?: (toast: Toast) => React.ReactElement;
 }
 
 export interface ToastWrapperProps {
   id: string;
   className?: string;
-  style?: React.CSSProperties;
+  styles?: StyleXStyles;
   onHeightUpdate: (id: string, height: number) => void;
   children?: React.ReactNode;
 }

@@ -1,5 +1,6 @@
-import { css, setup } from 'goober';
+import * as stylex from '@stylexjs/stylex';
 import * as React from 'react';
+
 import {
   resolveValue,
   ToasterProps,
@@ -10,12 +11,10 @@ import { useToaster } from '../core/use-toaster';
 import { prefersReducedMotion } from '../core/utils';
 import { ToastBar } from './toast-bar';
 
-setup(React.createElement);
-
 const ToastWrapper = ({
   id,
   className,
-  style,
+  styles,
   onHeightUpdate,
   children,
 }: ToastWrapperProps) => {
@@ -38,49 +37,93 @@ const ToastWrapper = ({
   );
 
   return (
-    <div ref={ref} className={className} style={style}>
+    <div
+      ref={ref}
+      className={className}
+      {...stylex.props(styles)}
+    >
       {children}
     </div>
   );
 };
 
-const getPositionStyle = (
-  position: ToastPosition,
-  offset: number
-): React.CSSProperties => {
-  const top = position.includes('top');
-  const verticalStyle: React.CSSProperties = top ? { top: 0 } : { bottom: 0 };
-  const horizontalStyle: React.CSSProperties = position.includes('center')
-    ? {
-        justifyContent: 'center',
-      }
-    : position.includes('right')
-    ? {
-        justifyContent: 'flex-end',
-      }
-    : {};
-  return {
+const positionStyles = stylex.create({
+  base: {
     left: 0,
     right: 0,
     display: 'flex',
     position: 'absolute',
-    transition: prefersReducedMotion()
-      ? undefined
-      : `all 230ms cubic-bezier(.21,1.02,.73,1)`,
-    transform: `translateY(${offset * (top ? 1 : -1)}px)`,
-    ...verticalStyle,
-    ...horizontalStyle,
-  };
+  },
+  top: {
+    top: 0,
+  },
+  bottom: {
+    bottom: 0,
+  },
+  transitionTransform: (
+    transform: string,
+    transition?: string
+  ) => ({
+    transition: transition,
+    transform: transform,
+  }),
+  horizontalAligment: (
+    horizontal: 'center' | 'flex-end' | null
+  ) => ({
+    justifyContent: horizontal,
+  }),
+});
+
+const getPositionStyle = (
+  position: ToastPosition, offset: number
+) => {
+  const top = position.includes('top');
+  const center = position.includes('center');
+  const right = position.includes('right');
+
+  const transition = prefersReducedMotion()
+    ? undefined
+    : 'all 230ms cubic-bezier(.21,1.02,.73,1)';
+
+  const transform = `translateY(${offset * (top ? 1 : -1)}px)`;
+
+  const positionStyle = [
+    positionStyles.base,
+    top
+      ? positionStyles.top
+      : positionStyles.bottom,
+    positionStyles.transitionTransform(
+      transform,
+      transition
+    ),
+    positionStyles.horizontalAligment(
+      center
+        ? 'center'
+        : right
+          ? 'flex-end'
+          : null
+    ),
+  ];
+
+  return positionStyle;
 };
 
-const activeClass = css`
-  z-index: 9999;
-  > * {
-    pointer-events: auto;
-  }
-`;
-
 const DEFAULT_OFFSET = 16;
+
+const toasterStyles = stylex.create({
+  container: {
+    position: 'fixed',
+    zIndex: 9999,
+    top: DEFAULT_OFFSET,
+    left: DEFAULT_OFFSET,
+    right: DEFAULT_OFFSET,
+    bottom: DEFAULT_OFFSET,
+    pointerEvents: 'none',
+  },
+  activeClass: {
+    zIndex: 9999,
+  },
+});
 
 export const Toaster: React.FC<ToasterProps> = ({
   reverseOrder,
@@ -88,27 +131,19 @@ export const Toaster: React.FC<ToasterProps> = ({
   toastOptions,
   gutter,
   children,
-  containerStyle,
+  containerStyles,
   containerClassName,
+  toastWrapperStyles,
+  toastWrapperClassName,
 }) => {
   const { toasts, handlers } = useToaster(toastOptions);
 
   return (
     <div
-      id="_rht_toaster"
-      style={{
-        position: 'fixed',
-        zIndex: 9999,
-        top: DEFAULT_OFFSET,
-        left: DEFAULT_OFFSET,
-        right: DEFAULT_OFFSET,
-        bottom: DEFAULT_OFFSET,
-        pointerEvents: 'none',
-        ...containerStyle,
-      }}
       className={containerClassName}
       onMouseEnter={handlers.startPause}
       onMouseLeave={handlers.endPause}
+      {...stylex.props(toasterStyles.container, containerStyles)}
     >
       {toasts.map((t) => {
         const toastPosition = t.position || position;
@@ -124,8 +159,12 @@ export const Toaster: React.FC<ToasterProps> = ({
             id={t.id}
             key={t.id}
             onHeightUpdate={handlers.updateHeight}
-            className={t.visible ? activeClass : ''}
-            style={positionStyle}
+            styles={[
+              positionStyle,
+              t.visible ? toasterStyles.activeClass : null,
+              toastWrapperStyles
+            ]}
+            className={toastWrapperClassName}
           >
             {t.type === 'custom' ? (
               resolveValue(t.message, t)
